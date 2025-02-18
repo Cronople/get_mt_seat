@@ -3,53 +3,58 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
 chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
-
 driver = webdriver.Chrome(options=chrome_options)
+
+def wait_element(t, element, clickable = False):
+    WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
+    if clickable:
+        driver.find_element(element[0], element[1]).click()
+
+idpwFile = open('idpw.txt', 'r')
+_ID = idpwFile.readline()
+_PW = idpwFile.readline()
+idpwFile.close()
 
 # 웹페이지 해당 주소 이동
 driver.get("https://ticket.melon.com/performance/index.htm?prodId=210962")
 
-#input('로그인 정보를 입력 후, 준비가 되면 아무 버튼 클릭 후 엔터: ')
-time.sleep(2)
-driver.find_element(by=By.ID, value='global_top_ticketLogin_Button').click()
-time.sleep(3)
-driver.find_element(by=By.XPATH, value='//*[@id="conts_section"]/div/div/div[1]/button').click()
-time.sleep(2)
-'''
-if len(driver.window_handles) > 1:
-    driver.switch_to.window(driver.window_handles[1])
-else:
-    print('error! 카카오 로그인 창 뜨지 않음')
 
-time.sleep(3)
-kko_id = driver.find_element(by=By.ID, value='loginId--1')
-kko_pw = driver.find_element(by=By.ID, value='password--2')
-kko_id.send_keys(ID)
-kko_pw.send_keys(PW)
-driver.find_element(by=By.XPATH, value='//*[@id="mainContent"]/div/div/form/div[4]/button[1]').click()
-time.sleep(3)
-'''
+wait_element(5, (By.ID, 'global_top_ticketLogin_Button'), clickable=True)
+wait_element(5, (By.XPATH, '//*[@id="conts_section"]/div/div/div[1]/button'), clickable=True)
+time.sleep(3) # 대기하며 로그인 창이 유지되는지 확인
+
+if len(driver.window_handles) > 1: #로그인 정보가 없을 때
+    driver.switch_to.window(driver.window_handles[1])
+    wait_element(5, (By.ID, 'loginId--1'))
+    driver.find_element(By.ID, 'loginId--1').send_keys(_ID)
+    driver.find_element(By.ID, 'password--2').send_keys(_PW)
+    driver.find_element(By.XPATH, '//*[@id="mainContent"]/div/div/form/div[4]/button[1]').click()
+    input('카카오 로그인 인증을 완료 한 후 아무 문자와 함께 엔터: ')
+else:
+    print('기존 로그인 정보로 로그인 완료')
 
 # ID - box_list_date : 날짜 선택 리스트, item_date: 날짜
 date_list = driver.find_element(by=By.ID, value='box_list_date')
 dates = date_list.find_elements(by=By.CLASS_NAME, value='item_date')
 print('-------box_list_date-------')
-for e in dates:
-    print(e.text)
+for i, e in enumerate(dates):
+    print(i,'] ', e.text)
 print('---------------------------')
 
 # 나중에 클릭할 날짜 선정, 일단 첫 날짜로
 dates[0].click()
-time.sleep(1)
+time.sleep(1) # 너무 빠르면 시간 선택 오류 발생
 # ID - ticketReservation_Btn : 예매하기 버튼
 driver.find_element(by=By.ID, value='ticketReservation_Btn').click()
 
-time.sleep(1)
 
+time.sleep(1)
 print(driver.window_handles)
 if len(driver.window_handles) > 1:
     driver.switch_to.window(driver.window_handles[1])
