@@ -47,8 +47,7 @@ def find_seat():
         });
 
         return notDdddElements;
-    """)
-    
+        """)
     # 찾은 요소들을 활용하여 Selenium 작업 수행 (예: 클릭, 텍스트 가져오기 등)
     for seat in seats:
         # 예시: 특정 fill 값을 가진 요소 클릭
@@ -65,6 +64,22 @@ def find_seat():
     if len(seats) == 0:
         print('구역 내 좌석 없음.')
     return didAlert # 0의 경우 좌석 없음
+
+
+def checkCaptcha(): # display: none or block에 따라 확인
+    try:
+        element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "certification"))
+            )
+        style = element.get_attribute("style")
+        if style:  # style 속성이 존재하는 경우에만 확인
+            return not ("display: none" in style)  # display:block 상태
+        else:
+            return False  # style 속성이 없는 경우
+    except: # element를 찾을 수 없는 경우
+        return False # 보안창이 없으므로 패스
+
+
 
 
 idpwFile = open('idpw.txt', 'r')
@@ -115,14 +130,19 @@ print(driver.window_handles)
 if len(driver.window_handles) > 1:
     driver.switch_to.window(driver.window_handles[1])
 
-# 보안코드 입력 성공했는지 체크하는 네트워크 판단 기능
-time.sleep(1)
-#ID - label-for-captcha : 캡챠 적는 란
-captchaImg = driver.find_element(By.ID, 'captchaImg')
-captcha_word = recognizing(captchaImg.get_attribute('src'))
-driver.find_element(By.ID, 'label-for-captcha').send_keys(captcha_word)
-driver.find_element(by=By.XPATH, value='//*[@id="btnComplete"]').click()
-input('보안문자 입력 완료: ')
+if checkCaptcha(): # 보안코드 있는지 체크
+    while checkCaptcha():
+        wait_element(5, (By.ID, 'btnReload'), True)
+        #ID - label-for-captcha : 캡챠 적는 란
+        captchaImg = driver.find_element(By.ID, 'captchaImg')
+        captcha_word = recognizing(captchaImg.get_attribute('src'))
+        driver.find_element(By.ID, 'label-for-captcha').send_keys(captcha_word)
+        time.sleep(5) # 사람이 적기 위해 시간을 배치. 자동 입력시 사라져야 하는 시간
+        driver.find_element(By.XPATH, '//*[@id="btnComplete"]').click()
+        time.sleep(.5)
+    print('보안 문자 통과')
+else:
+    print('보안 문자 없음')
 
 try:
     # iframe으로 전환 (반드시 필요)
@@ -177,11 +197,14 @@ try:
         time.sleep(.5)
 
     # 좌석 정보
-    ticket_info_element = WebDriverWait(driver, 10).until(
+    ticket_info_element = WebDriverWait(driver, 5).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, ".txt_ticket_info"))
     )
     seat_info = ticket_info_element.text
     print(seat_info)
+
+    
+
     # 가격 선택 창에서 다음 버튼
     wait_element(5, (By.ID, 'nextPayment'), True)
     driver.switch_to.default_content() # iframe에서 빠져나오기
