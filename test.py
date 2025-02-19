@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from recognize_word import recognizing
@@ -11,6 +12,8 @@ chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
 chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
 driver = webdriver.Chrome(options=chrome_options)
+
+
 
 
 def wait_element(t, element, clickable = False):
@@ -201,6 +204,18 @@ try:
         EC.presence_of_element_located((By.CSS_SELECTOR, ".txt_ticket_info"))
     )
     seat_info = ticket_info_element.text
+
+    # 티켓 매수 선택
+    select_elements = driver.find_elements(By.ID, 'volume_10009_10067')
+
+    if select_elements:  # 선택창 확인
+        select_element = select_elements[0]
+        select = Select(select_element)
+        select.select_by_index(1)
+
+
+
+
     print(seat_info)
 
     
