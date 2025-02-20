@@ -6,6 +6,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from recognize_word import recognizing
+from preset import getPreset
 
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
@@ -52,10 +53,10 @@ def find_seat():
     # 찾은 요소들을 활용하여 Selenium 작업 수행 (예: 클릭, 텍스트 가져오기 등)
     for seat in seats:
         # 예시: 특정 fill 값을 가진 요소 클릭
-        print('구역 내 좌석 수:', len(seats))
-        print('[좌석선택]', seat.get_attribute('x'), seat.get_attribute('y'))
         seat.click()
         driver.find_element(by=By.ID, value='nextTicketSelection').click()
+        print('구역 내 좌석 수:', len(seats))
+        print('[좌석선택]', seat.get_attribute('x'), seat.get_attribute('y'))
         if checkAlert():
             find_seat()
             didAlert = 2  # 좌석 찾음, 이선좌로 알람발생
@@ -63,7 +64,8 @@ def find_seat():
         else:
             return 1  # 좌석 찾음, 알람 없음
     if len(seats) == 0:
-        print('구역 내 좌석 없음.')
+        pass
+        # print('구역 내 좌석 없음.')
     return didAlert  # 0의 경우 좌석 없음
 
 
@@ -80,17 +82,15 @@ def checkCaptcha():  # display: none or block에 따라 확인
     except:  # element를 찾을 수 없는 경우
         return False  # 보안창이 없으므로 패스
 
+presetData = getPreset()
 
 with open('idpw.txt', 'r', encoding='utf-8') as idpwFile:  # 'utf-8'을 실제 인코딩으로 변경
     _ID = idpwFile.readline()
     _PW = idpwFile.readline()
-    _BANK = idpwFile.readline().strip()
-    _PN = idpwFile.readline()
-    _BIRTH = idpwFile.readline()
     idpwFile.close()
 
 # 웹페이지 해당 주소 이동
-# driver.get("https://ticket.melon.com/performance/index.htm?prodId=210962")210876
+# driver.get("https://ticket.melon.com/performance/index.htm?prodId=210962") # 210876
 driver.get("https://ticket.melon.com/performance/index.htm?prodId=210711")
 
 wait_element(5, (By.ID, 'global_top_ticketLogin_Button'), clickable=True)
@@ -116,21 +116,37 @@ time.sleep(3)
 wait_element(5, (By.ID, 'box_list_date'))
 date_list = driver.find_element(by=By.ID, value='box_list_date')
 dates = date_list.find_elements(by=By.CLASS_NAME, value='item_date')
-# print('-------box_list_date-------')
-# for i, e in enumerate(dates):
-#     print(i,'] ', e.text)
-# print('---------------------------')
+print('-------box_list_date-------')
+for i, e in enumerate(dates):
+    print(i,'] ', e.text)
+print('---------------------------')
 
-# 나중에 클릭할 날짜 선정, 일단 첫 날짜로
-dates[0].click()
+if len(dates) > 1:
+    if presetData['date'] == '':
+        date = input('날짜 선택 (숫자로): ')
+    else:
+        date = presetData['date']
+    dates[int(date)].click()
+else:
+    dates[0].click()
+
 time.sleep(.5)  # 너무 빠르면 시간 선택 오류 발생
 # ID - ticketReservation_Btn : 예매하기 버튼
 driver.find_element(by=By.ID, value='ticketReservation_Btn').click()
 
 time.sleep(1)
 # print(driver.window_handles)
-if len(driver.window_handles) > 1:
-    driver.switch_to.window(driver.window_handles[1])
+wait_stack = 0
+while True: # 대기열로 예매창이 열리지 않을 시
+    if len(driver.window_handles) > 1:
+        driver.switch_to.window(driver.window_handles[1])
+        break
+    else:
+        wait_stack += 1
+        if wait_stack > 10:
+            print('예매창 열리길 기다리는 중...')
+            wait_stack = 0
+        time.sleep(2)
 
 if checkCaptcha():  # 보안코드 있는지 체크
     while checkCaptcha():
@@ -154,8 +170,6 @@ try:
     # print('iframe 전환 완료')
 
     # 좌석 등급 펼치기
-
-    # tbody = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "divGradeSummary")))
     tbody = wait_element(10, (By.ID, "divGradeSummary"))
     # tbody 안의 모든 tr 요소 찾기 (좌석 정보 tr만 해당)
     sector_elements = tbody.find_elements(By.TAG_NAME, "tr")
@@ -168,8 +182,11 @@ try:
                 # 좌석 이름 td 요소 찾기
                 sector_name = row.find_element(By.CLASS_NAME, "seat_name").text
                 print(int(i / 2), '] ', sector_name)
-        grade = input('원하는 등급에 해당하는 숫자를 적고 엔터: ')
-        sector_element = sector_elements[int(grade * 2)]
+        if presetData['grade'] == '':
+            grade = input('원하는 등급에 해당하는 숫자를 적고 엔터: ')
+        else:
+            grade = presetData['grade']
+        sector_element = sector_elements[int(int(grade) * 2)]
     print(sector_element.text, ' 구역 요소 확장')
     sector_element.click()
 
@@ -182,7 +199,10 @@ try:
     for i, e in enumerate(seat_elements):
         print(i, '] ', e.text)
 
-    focus_sector = input('조사 구역을 번호로 적어주세요: ')
+    if presetData['sector'] == '':
+        focus_sector = input('조사 구역을 번호로 적어주세요: ')
+    else:
+        focus_sector = presetData['sector']
     if ',' in focus_sector:
         focus_sector = focus_sector.split(',')
     else:
@@ -192,17 +212,25 @@ try:
     for e in focus_sector_list:
         print(seat_elements[e].text)
 
-    for i in focus_sector_list:
-        seat_elements[i].click()
-        didAlert = find_seat()
-        if didAlert == 1:  # 좌석 잡음
+    if presetData['repeat'] == '':
+        repeat_time = 1
+    else:
+        repeat_time= int(presetData['repeat'])
+
+    while True:
+        for i in focus_sector_list:
+            seat_elements[i].click()
+            didAlert = find_seat()
+            if didAlert == 1:  # 좌석 잡음
+                break
+            elif didAlert == 2:  # 이선좌로 알람 발생
+                sector_element.click()
+                seat_elements = WebDriverWait(driver, 10).until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".list_area.listOn li"))
+                )
+            time.sleep(repeat_time) # 구역 전환 시간텀
+        if didAlert == 1:
             break
-        elif didAlert == 2:  # 이선좌로 알람 발생
-            sector_element.click()
-            seat_elements = WebDriverWait(driver, 10).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".list_area.listOn li"))
-            )
-        time.sleep(.5)
 
     # 좌석 정보
     ticket_info_element = WebDriverWait(driver, 5).until(
@@ -212,8 +240,8 @@ try:
     print(seat_info)
 
     # 티켓 매수 선택
-    # select_elements = driver.find_elements(By.ID, 'volume_10009_10067') # 아이브 id
-    select_elements = driver.find_elements(By.ID, 'volume_10007_10067')  # 다른 예매 id
+    select_elements = driver.find_elements(By.ID, 'volume_10009_10067') # 아이브 id
+    # select_elements = driver.find_elements(By.ID, 'volume_10007_10067')  # 다른 예매 id
 
     if select_elements:  # 선택창 확인
         select_element = select_elements[0]
@@ -242,13 +270,13 @@ try:
                 # 은행명과 일치하는 option 찾아서 선택
                 bank_found = False  # 은행을 찾았는지 여부를 저장하는 변수
                 for option in select.options:
-                    if option.text == _BANK:
-                        select.select_by_visible_text(_BANK)
+                    if option.text == presetData['bank']:
+                        select.select_by_visible_text(presetData['bank'])
                         bank_found = True  # 은행을 찾았음을 표시
                         break  # 은행을 찾았으면 반복문 종료
 
                 if not bank_found:  # 은행을 찾지 못했다면
-                    print(f"은행: {_BANK} 를 찾을 수 없습니다.")
+                    print(f"은행: {presetData['bank']} 를 찾을 수 없습니다.")
 
             except Exception as e:
                 print(f"은행 선택 중 오류 발생: {e}")
@@ -302,13 +330,13 @@ try:
             phone_number_input = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.NAME, 'phoneNumber'))
             )
-            phone_number_input.send_keys(_PN)
+            phone_number_input.send_keys(presetData['phonenumber'])
 
             # 생년월일 입력
             date_of_birth_input = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.NAME, 'dateOfBirth'))
             )
-            date_of_birth_input.send_keys(_BIRTH)
+            date_of_birth_input.send_keys(presetData['birthdate'])
 
             try:
                 # 결제요청하기
