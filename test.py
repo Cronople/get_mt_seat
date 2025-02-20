@@ -1,12 +1,11 @@
 import time
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from recognize_word import recognizing
+from ticket.recognize_word import recognizing
 
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
@@ -14,9 +13,7 @@ chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
 driver = webdriver.Chrome(options=chrome_options)
 
 
-
-
-def wait_element(t, element, clickable = False):
+def wait_element(t, element, clickable=False):
     target = WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
     if clickable:
         driver.find_element(element[0], element[1]).click()
@@ -61,35 +58,36 @@ def find_seat():
         driver.find_element(by=By.ID, value='nextTicketSelection').click()
         if checkAlert():
             find_seat()
-            didAlert = 2 # 좌석 찾음, 이선좌로 알람발생
+            didAlert = 2  # 좌석 찾음, 이선좌로 알람발생
             break
         else:
-            return 1 # 좌석 찾음, 알람 없음
+            return 1  # 좌석 찾음, 알람 없음
     if len(seats) == 0:
         print('구역 내 좌석 없음.')
-    return didAlert # 0의 경우 좌석 없음
+    return didAlert  # 0의 경우 좌석 없음
 
 
-def checkCaptcha(): # display: none or block에 따라 확인
+def checkCaptcha():  # display: none or block에 따라 확인
     try:
         element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "certification"))
-            )
+        )
         style = element.get_attribute("style")
         if style:  # style 속성이 존재하는 경우에만 확인
             return not ("display: none" in style)  # display:block 상태
         else:
             return False  # style 속성이 없는 경우
-    except: # element를 찾을 수 없는 경우
-        return False # 보안창이 없으므로 패스
+    except:  # element를 찾을 수 없는 경우
+        return False  # 보안창이 없으므로 패스
 
 
-
-
-idpwFile = open('idpw.txt', 'r')
-_ID = idpwFile.readline()
-_PW = idpwFile.readline()
-idpwFile.close()
+with open('idpw.txt', 'r', encoding='utf-8') as idpwFile:  # 'utf-8'을 실제 인코딩으로 변경
+    _ID = idpwFile.readline()
+    _PW = idpwFile.readline()
+    _BANK = idpwFile.readline().strip()
+    _PN = idpwFile.readline()
+    _BIRTH = idpwFile.readline()
+    idpwFile.close()
 
 # 웹페이지 해당 주소 이동
 # driver.get("https://ticket.melon.com/performance/index.htm?prodId=210962")210876
@@ -97,19 +95,19 @@ driver.get("https://ticket.melon.com/performance/index.htm?prodId=210711")
 
 wait_element(5, (By.ID, 'global_top_ticketLogin_Button'), clickable=True)
 wait_element(5, (By.XPATH, '//*[@id="conts_section"]/div/div/div[1]/button'), clickable=True)
-time.sleep(2) # 대기하며 로그인 창이 유지되는지 확인
+time.sleep(2)  # 대기하며 로그인 창이 유지되는지 확인
 
-if len(driver.window_handles) > 1: #로그인 정보가 없을 때
+if len(driver.window_handles) > 1:  # 로그인 정보가 없을 때
     driver.switch_to.window(driver.window_handles[1])
     wait_element(5, (By.ID, 'loginId--1'))
     driver.find_element(By.ID, 'loginId--1').send_keys(_ID)
     driver.find_element(By.ID, 'password--2').send_keys(_PW)
     driver.find_element(By.XPATH, '//*[@id="mainContent"]/div/div/form/div[4]/button[1]').click()
-    #input('카카오 로그인 인증을 완료 한 후 아무 문자와 함께 엔터: ')
+    # input('카카오 로그인 인증을 완료 한 후 아무 문자와 함께 엔터: ')
 else:
     print('기존 로그인 정보로 로그인 완료')
 
-print(driver.window_handles)
+# print(driver.window_handles)
 driver.switch_to.window(driver.window_handles[0])
 
 # ID - box_list_date : 날짜 선택 리스트, item_date: 날짜
@@ -117,31 +115,30 @@ time.sleep(3)
 wait_element(5, (By.ID, 'box_list_date'))
 date_list = driver.find_element(by=By.ID, value='box_list_date')
 dates = date_list.find_elements(by=By.CLASS_NAME, value='item_date')
-print('-------box_list_date-------')
-for i, e in enumerate(dates):
-    print(i,'] ', e.text)
-print('---------------------------')
+# print('-------box_list_date-------')
+# for i, e in enumerate(dates):
+#     print(i,'] ', e.text)
+# print('---------------------------')
 
 # 나중에 클릭할 날짜 선정, 일단 첫 날짜로
 dates[0].click()
-time.sleep(.5) # 너무 빠르면 시간 선택 오류 발생
+time.sleep(.5)  # 너무 빠르면 시간 선택 오류 발생
 # ID - ticketReservation_Btn : 예매하기 버튼
 driver.find_element(by=By.ID, value='ticketReservation_Btn').click()
 
-
 time.sleep(1)
-print(driver.window_handles)
+# print(driver.window_handles)
 if len(driver.window_handles) > 1:
     driver.switch_to.window(driver.window_handles[1])
 
-if checkCaptcha(): # 보안코드 있는지 체크
+if checkCaptcha():  # 보안코드 있는지 체크
     while checkCaptcha():
         wait_element(5, (By.ID, 'btnReload'), True)
-        #ID - label-for-captcha : 캡챠 적는 란
+        # ID - label-for-captcha : 캡챠 적는 란
         captchaImg = driver.find_element(By.ID, 'captchaImg')
         captcha_word = recognizing(captchaImg.get_attribute('src'))
         driver.find_element(By.ID, 'label-for-captcha').send_keys(captcha_word)
-        time.sleep(5) # 사람이 적기 위해 시간을 배치. 자동 입력시 사라져야 하는 시간
+        time.sleep(5)  # 사람이 적기 위해 시간을 배치. 자동 입력시 사라져야 하는 시간
         driver.find_element(By.XPATH, '//*[@id="btnComplete"]').click()
         time.sleep(.5)
     print('보안 문자 통과')
@@ -153,8 +150,8 @@ try:
     iframe = WebDriverWait(driver, 10).until(
         EC.frame_to_be_available_and_switch_to_it((By.ID, "oneStopFrame"))
     )
-    print('iframe 전환 완료')
-    
+    # print('iframe 전환 완료')
+
     # 좌석 등급 펼치기
 
     # tbody = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "divGradeSummary")))
@@ -169,9 +166,9 @@ try:
             if "box_list_area" not in row.get_attribute("class"):
                 # 좌석 이름 td 요소 찾기
                 sector_name = row.find_element(By.CLASS_NAME, "seat_name").text
-                print(int(i/2), '] ', sector_name)
+                print(int(i / 2), '] ', sector_name)
         grade = input('원하는 등급에 해당하는 숫자를 적고 엔터: ')
-        sector_element = sector_elements[int(grade*2)]
+        sector_element = sector_elements[int(grade * 2)]
     print(sector_element.text, ' 구역 요소 확장')
     sector_element.click()
 
@@ -183,7 +180,7 @@ try:
     )
     for i, e in enumerate(seat_elements):
         print(i, '] ', e.text)
-    
+
     focus_sector = input('조사 구역을 번호로 적어주세요: ')
     if ',' in focus_sector:
         focus_sector = focus_sector.split(',')
@@ -193,17 +190,17 @@ try:
     print('조사할 구역')
     for e in focus_sector_list:
         print(seat_elements[e].text)
-    
+
     for i in focus_sector_list:
         seat_elements[i].click()
         didAlert = find_seat()
-        if didAlert == 1: # 좌석 잡음
+        if didAlert == 1:  # 좌석 잡음
             break
-        elif didAlert == 2: # 이선좌로 알람 발생
+        elif didAlert == 2:  # 이선좌로 알람 발생
             sector_element.click()
             seat_elements = WebDriverWait(driver, 10).until(
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".list_area.listOn li"))
-                )
+            )
         time.sleep(.5)
 
     # 좌석 정보
@@ -214,7 +211,8 @@ try:
     print(seat_info)
 
     # 티켓 매수 선택
-    select_elements = driver.find_elements(By.ID, 'volume_10009_10067')
+    # select_elements = driver.find_elements(By.ID, 'volume_10009_10067') # 아이브 id
+    select_elements = driver.find_elements(By.ID, 'volume_10007_10067')  # 다른 예매 id
 
     if select_elements:  # 선택창 확인
         select_element = select_elements[0]
@@ -223,7 +221,111 @@ try:
 
     # 가격 선택 창에서 다음 버튼
     wait_element(5, (By.ID, 'nextPayment'), True)
-    driver.switch_to.default_content() # iframe에서 빠져나오기
+
+    try:
+        # 무통장입금 버튼 찾기
+        cash_payment_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[title="무통장입금"]'))
+        )
+
+        # 무통장입금 버튼이 활성화되어 있는지 확인
+        if not cash_payment_button.get_attribute("disabled"):
+            cash_payment_button.click()
+            try:
+                # select box에서 원하는 은행 찾기
+                bank_select = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, 'bankCode'))
+                )
+                select = Select(bank_select)
+
+                # 은행명과 일치하는 option 찾아서 선택
+                bank_found = False  # 은행을 찾았는지 여부를 저장하는 변수
+                for option in select.options:
+                    if option.text == _BANK:
+                        select.select_by_visible_text(_BANK)
+                        bank_found = True  # 은행을 찾았음을 표시
+                        break  # 은행을 찾았으면 반복문 종료
+
+                if not bank_found:  # 은행을 찾지 못했다면
+                    print(f"은행: {_BANK} 를 찾을 수 없습니다.")
+
+            except Exception as e:
+                print(f"은행 선택 중 오류 발생: {e}")
+
+            # 현금영수증 미발행 라디오 버튼 찾기 및 클릭
+            no_issue_radio = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[title="미발행"]'))  # title 속성으로 찾기
+            )
+            no_issue_radio.click()
+
+            # 전체동의
+            agree_all_checkbox = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, 'chkAgreeAll'))
+            )
+            agree_all_checkbox.click()
+
+            # # 최종 결제
+            # payment_button = WebDriverWait(driver, 10).until(
+            #         EC.element_to_be_clickable((By.ID, 'btnFinalPayment'))
+            #     )
+            # payment_button.click()
+
+        else:  # 무통이 없으면 카카오페이 머니로 변경
+
+            # 카카오페이 머니 클릭
+            kakaopay_money_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'input[title="카카오페이 머니"]'))
+            )
+            kakaopay_money_button.click()
+
+            # 전체동의
+            agree_all_checkbox = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, 'chkAgreeAll'))
+            )
+            agree_all_checkbox.click()
+
+            # 최종 결제
+            time.sleep(1)
+            payment_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, 'btnFinalPayment'))
+            )
+            payment_button.click()
+
+            # "카톡결제" 요소 찾기 및 클릭
+            kakaopay_element = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, '카톡결제'))
+            )
+
+            # 휴대폰번호 입력
+            phone_number_input = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.NAME, 'phoneNumber'))
+            )
+            phone_number_input.send_keys(_PN)
+
+            # 생년월일 입력
+            date_of_birth_input = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.NAME, 'dateOfBirth'))
+            )
+            date_of_birth_input.send_keys(_BIRTH)
+
+            try:
+                # 결제요청하기
+                payment_request_button = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'button[type="button"].kp-m-button.large.primary'))
+                )
+
+                # 버튼 활성화 검사
+                if not payment_request_button.get_attribute("disabled"):
+                    payment_request_button.click()
+                else:
+                    print("결제요청 버튼이 비활성화되어 있습니다. 결제 조건을 확인하세요.")
+
+            except Exception as e:
+                print(f"결제요청 버튼 클릭 중 오류 발생: {e}")
+    except Exception as e:
+        print(f"결제 수단 선택 중 오류 발생: {e}")
+
+    driver.switch_to.default_content()  # iframe에서 빠져나오기
 
 except Exception as e:
     print(f"오류 발생: {e}")
