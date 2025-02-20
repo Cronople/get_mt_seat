@@ -17,9 +17,10 @@ driver = webdriver.Chrome(options=chrome_options)
 
 
 def wait_element(t, element, clickable = False):
-    WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
+    target = WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
     if clickable:
         driver.find_element(element[0], element[1]).click()
+    return target
 
 
 def checkAlert():
@@ -92,7 +93,7 @@ idpwFile.close()
 
 # 웹페이지 해당 주소 이동
 # driver.get("https://ticket.melon.com/performance/index.htm?prodId=210962")210876
-driver.get("https://ticket.melon.com/performance/index.htm?prodId=210876")
+driver.get("https://ticket.melon.com/performance/index.htm?prodId=210711")
 
 wait_element(5, (By.ID, 'global_top_ticketLogin_Button'), clickable=True)
 wait_element(5, (By.XPATH, '//*[@id="conts_section"]/div/div/div[1]/button'), clickable=True)
@@ -155,19 +156,25 @@ try:
     print('iframe 전환 완료')
     
     # 좌석 등급 펼치기
-    sector_elements = WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#divGradeSummary")) # CSS Selector 사용
-    )
-    print('구역 요소 찾음')
-    if len(sector_elements) == 1:
+
+    # tbody = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "divGradeSummary")))
+    tbody = wait_element(10, (By.ID, "divGradeSummary"))
+    # tbody 안의 모든 tr 요소 찾기 (좌석 정보 tr만 해당)
+    sector_elements = tbody.find_elements(By.TAG_NAME, "tr")
+    if len(sector_elements) <= 2:
         sector_element = sector_elements[0]
     else:
-        for i, e in enumerate(sector_elements):
-            print(i, '] ', e)
+        for i, row in enumerate(sector_elements):
+            # 좌석 정보를 가진 tr 요소인지 확인 (class="box_list_area" 제외)
+            if "box_list_area" not in row.get_attribute("class"):
+                # 좌석 이름 td 요소 찾기
+                sector_name = row.find_element(By.CLASS_NAME, "seat_name").text
+                print(int(i/2), '] ', sector_name)
         grade = input('원하는 등급에 해당하는 숫자를 적고 엔터: ')
-        sector_element = sector_elements[grade]
+        sector_element = sector_elements[int(grade*2)]
     print(sector_element.text, ' 구역 요소 확장')
     sector_element.click()
+
     time.sleep(.5)
 
     # "list_area listOn" 클래스 아래의 모든 <li> 요소 찾기
@@ -219,4 +226,4 @@ try:
     driver.switch_to.default_content() # iframe에서 빠져나오기
 
 except Exception as e:
-    print(f"3오류 발생: {e}")
+    print(f"오류 발생: {e}")

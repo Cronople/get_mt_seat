@@ -1,12 +1,7 @@
 from mmocr.apis import init_detector, inference_detector
 from mmocr.datasets import build_dataset
 from mmengine.runner import load_checkpoint, save_checkpoint
-from albumentations import (
-    Compose, RandomCrop, RandomBrightnessContrast,
-    RandomRotate, ShiftScaleRotate, HorizontalFlip,
-    RandomSizedBBoxSafeCrop, HueSaturationValue, RGBShift,
-    RandomResizedCrop
-)
+from albumentations import Compose, ShiftScaleRotate
 import numpy as np
 import os
 
