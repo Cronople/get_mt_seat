@@ -204,6 +204,7 @@ try:
         EC.presence_of_element_located((By.CSS_SELECTOR, ".txt_ticket_info"))
     )
     seat_info = ticket_info_element.text
+    print(seat_info)
 
     # 티켓 매수 선택
     select_elements = driver.find_elements(By.ID, 'volume_10009_10067')
@@ -212,13 +213,6 @@ try:
         select_element = select_elements[0]
         select = Select(select_element)
         select.select_by_index(1)
-
-
-
-
-    print(seat_info)
-
-    
 
     # 가격 선택 창에서 다음 버튼
     wait_element(5, (By.ID, 'nextPayment'), True)
