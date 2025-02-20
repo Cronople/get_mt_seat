@@ -1,12 +1,15 @@
 # get_mt_seat
 
 ## install list 
+python version = 3.10
 ### selenium
 pip install selenium
 ### opencv
 pip install opencv
 ### mmcv
-pip install mmcv
+pip install -U openmim
+mim install mmcv==2.0.0
+pip install mmdet
 ### albumentations
 pip install albumentations
 ### pytorch
