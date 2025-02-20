@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from ticket.recognize_word import recognizing
+from recognize_word import recognizing
 
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
@@ -69,7 +69,7 @@ def find_seat():
 
 def checkCaptcha():  # display: none or block에 따라 확인
     try:
-        element = WebDriverWait(driver, 10).until(
+        element = WebDriverWait(driver, 2).until(
             EC.presence_of_element_located((By.ID, "certification"))
         )
         style = element.get_attribute("style")
@@ -100,6 +100,7 @@ time.sleep(2)  # 대기하며 로그인 창이 유지되는지 확인
 if len(driver.window_handles) > 1:  # 로그인 정보가 없을 때
     driver.switch_to.window(driver.window_handles[1])
     wait_element(5, (By.ID, 'loginId--1'))
+    wait_element(5, (By.ID, 'label-saveSignedIn'), True)
     driver.find_element(By.ID, 'loginId--1').send_keys(_ID)
     driver.find_element(By.ID, 'password--2').send_keys(_PW)
     driver.find_element(By.XPATH, '//*[@id="mainContent"]/div/div/form/div[4]/button[1]').click()
@@ -229,7 +230,7 @@ try:
         )
 
         # 무통장입금 버튼이 활성화되어 있는지 확인
-        if not cash_payment_button.get_attribute("disabled"):
+        if  cash_payment_button.get_attribute("disabled"):
             cash_payment_button.click()
             try:
                 # select box에서 원하는 은행 찾기
@@ -264,11 +265,11 @@ try:
             )
             agree_all_checkbox.click()
 
-            # # 최종 결제
-            # payment_button = WebDriverWait(driver, 10).until(
-            #         EC.element_to_be_clickable((By.ID, 'btnFinalPayment'))
-            #     )
-            # payment_button.click()
+            # 최종 결제
+            payment_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.ID, 'btnFinalPayment'))
+                )
+            payment_button.click()
 
         else:  # 무통이 없으면 카카오페이 머니로 변경
 
@@ -295,6 +296,7 @@ try:
             kakaopay_element = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, '카톡결제'))
             )
+            kakaopay_element.click()
 
             # 휴대폰번호 입력
             phone_number_input = WebDriverWait(driver, 10).until(
