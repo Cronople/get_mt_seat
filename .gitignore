@@ -1,3 +1,7 @@
 idpw.txt
 __pycache__/*.pyc
 buildfolder/__pycache__/*.pyc
+mmocr/save/rec_word03/epoch_100.pth
+mmocr/apis/__pycache__/*.pyc
+buildfolder/mmcv-2.0.0rc4-cp38-cp38-win_amd64.whl
+buildfolder/mmocr_fixed/save/rec_word03/epoch_100.pth

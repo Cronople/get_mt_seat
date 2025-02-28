@@ -16,8 +16,10 @@ pip install albumentations
 pip3 install torch torchvision torchaudio
 https://pytorch.org/get-started/locally/
 
-idpw.txt 파일에 id, pw를 적어두기
+idpw.txt 파일에 id, pw, telegram bot, bot id를 적어두기
 
 idpw.txt
 01012349876
 12password34
+telegram_bot
+telegram_bot_id
