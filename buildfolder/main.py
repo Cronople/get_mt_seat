@@ -21,7 +21,7 @@ def send_message(_bot, _id, txt, repeat=1):
     if _bot == '':
         print('텔레그램 없음] ', txt)
     else:
-        url = "https://api.telegram.org/"
+        url = "https://api.telegram.org/bot"
         for i in range(0, repeat):
             r = requests.get(url+_bot+'/sendMessage?chat_id='+_id+"&text="+txt)
             print(r)
@@ -29,7 +29,7 @@ def send_message(_bot, _id, txt, repeat=1):
 def wait_element(t, element, clickable=False):
     target = WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
     if clickable:
-        driver.find_element(element[0], element[1]).click()
+        target.click()
     return target
 
 
@@ -168,10 +168,9 @@ def searchSeats():
             time.sleep(repeat_time) # 구역 전환 시간텀
         if didAlert == 1:
             get_seat = True
-            send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 3)
+            send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 5)
             break
     if get_seat == False:
-        send_message(_T_BOT, _T_ID, '다시 진행', 1)
         driver.close()
         time.sleep(2)
         driver.switch_to.window(driver.window_handles[0])
@@ -266,9 +265,11 @@ while (not get_seat):
                 print('예매창 열리길 기다리는 중...')
                 wait_stack = 0
             time.sleep(2)
+    print('시작 시간:', time.ctime())
 
     if checkCaptcha():  # 보안코드 있는지 체크
         captcha_text = driver.find_element(By.ID, 'label-for-captcha')
+        captcha_count = 0
         while checkCaptcha():
             wait_element(5, (By.ID, 'btnReload'), True)
             time.sleep(1)
@@ -277,9 +278,12 @@ while (not get_seat):
             captchaImg = driver.find_element(By.ID, 'captchaImg')
             captcha_word = recognizing(captchaImg.get_attribute('src'))
             captcha_text.send_keys(captcha_word)
-            # time.sleep(5)  # 사람이 적기 위해 시간을 배치. 자동 입력시 사라져야 하는 시간
+            if captcha_count > 5:
+                send_message(_T_BOT, _T_ID, '캡챠 5회 오류 이상, 직접 진행해주세요')
+                time.sleep(10)
             driver.find_element(By.XPATH, '//*[@id="btnComplete"]').click()
             time.sleep(.7)
+            captcha_count += 1
         print('보안 문자 통과')
     else:
         print('보안 문자 없음')
