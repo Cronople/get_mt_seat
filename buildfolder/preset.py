@@ -27,5 +27,3 @@ def getPreset():
     print('-' * 20)
 
     return preset_data
-
-getPreset()

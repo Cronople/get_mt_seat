@@ -1,5 +1,5 @@
 import time
-import webbrowser
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -10,24 +10,26 @@ from recognize_word import recognizing
 from preset import getPreset
 
 chrome_options = Options()
+user_agent=f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+chrome_options.add_argument("user-agent="+user_agent)
 chrome_options.add_experimental_option("detach", True)
 chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
 driver = webdriver.Chrome(options=chrome_options)
 
 
-def send_message(target, txt, repeat=1):
-    if target == '':
-        print('텔레그램 자동화 누락', txt)
+def send_message(_bot, _id, txt, repeat=1):
+    if _bot == '':
+        print('텔레그램 없음] ', txt)
     else:
-        url = "https://api.telegram.org/"
-        mid = "&text="
+        url = "https://api.telegram.org/bot"
         for i in range(0, repeat):
-            webbrowser.open(url+target+mid+txt)
+            r = requests.get(url+_bot+'/sendMessage?chat_id='+_id+"&text="+txt)
+            print(r)
 
 def wait_element(t, element, clickable=False):
     target = WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
     if clickable:
-        driver.find_element(element[0], element[1]).click()
+        target.click()
     return target
 
 
@@ -94,6 +96,7 @@ def checkCaptcha():  # display: none or block에 따라 확인
     
 
 def searchSeats():
+    get_seat = False
     # iframe으로 전환 (반드시 필요)
     iframe = WebDriverWait(driver, 10).until(
         EC.frame_to_be_available_and_switch_to_it((By.ID, "oneStopFrame"))
@@ -148,7 +151,7 @@ def searchSeats():
     if presetData['repeat'] == '':
         repeat_time = 1
     else:
-        repeat_time= int(presetData['repeat'])
+        repeat_time= float(presetData['repeat'])
 
     start_time = time.time()
     while time.time() - start_time < 2400: # 40분에 한번씩 초기화
@@ -165,10 +168,9 @@ def searchSeats():
             time.sleep(repeat_time) # 구역 전환 시간텀
         if didAlert == 1:
             get_seat = True
-            send_message(_TELEGRAM, 'WE Got Ticket!', 3)
+            send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 5)
             break
     if get_seat == False:
-        send_message(_TELEGRAM, '다시 진행', 3)
         driver.close()
         time.sleep(2)
         driver.switch_to.window(driver.window_handles[0])
@@ -182,7 +184,8 @@ with open('idpw.txt', 'r', encoding='utf-8') as idpwFile:  # 'utf-8'을 실제 �
     _ID = idpwFile.readline().strip()
     _PW = idpwFile.readline().strip()
     _PLATFORM = idpwFile.readline().strip()
-    _TELEGRAM = idpwFile.readline().strip()
+    _T_BOT = idpwFile.readline().strip()
+    _T_ID = idpwFile.readline().strip()
     idpwFile.close()
 
 # 웹페이지 해당 주소 이동
@@ -262,17 +265,25 @@ while (not get_seat):
                 print('예매창 열리길 기다리는 중...')
                 wait_stack = 0
             time.sleep(2)
+    print('시작 시간:', time.ctime())
 
     if checkCaptcha():  # 보안코드 있는지 체크
+        captcha_text = driver.find_element(By.ID, 'label-for-captcha')
+        captcha_count = 0
         while checkCaptcha():
             wait_element(5, (By.ID, 'btnReload'), True)
+            time.sleep(1)
+            captcha_text.clear()
             # ID - label-for-captcha : 캡챠 적는 란
             captchaImg = driver.find_element(By.ID, 'captchaImg')
             captcha_word = recognizing(captchaImg.get_attribute('src'))
-            driver.find_element(By.ID, 'label-for-captcha').send_keys(captcha_word)
-            time.sleep(5)  # 사람이 적기 위해 시간을 배치. 자동 입력시 사라져야 하는 시간
+            captcha_text.send_keys(captcha_word)
+            if captcha_count > 5:
+                send_message(_T_BOT, _T_ID, '캡챠 5회 오류 이상, 직접 진행해주세요')
+                time.sleep(10)
             driver.find_element(By.XPATH, '//*[@id="btnComplete"]').click()
-            time.sleep(.5)
+            time.sleep(.7)
+            captcha_count += 1
         print('보안 문자 통과')
     else:
         print('보안 문자 없음')
@@ -327,12 +338,12 @@ while (not get_seat):
                                 break  # 은행을 찾았으면 반복문 종료
 
                         if not bank_found:  # 은행을 찾지 못했다면
-                            send_message(_TELEGRAM, '은행 선택 오류! 직접 결제 단계를 수행해주세요')
+                            send_message(_T_BOT, _T_ID,'은행 선택 오류! 직접 결제 단계를 수행해주세요')
                             print(f"은행: {presetData['bank']} 를 찾을 수 없습니다.")
                             # 은행 못 찾으면 그냥 첫번째 은행으로 고르도록
 
                     except Exception as e:
-                        send_message(_TELEGRAM, '은행 선택 오류! 직접 결제 단계를 수행해주세요')
+                        send_message(_T_BOT, _T_ID, '은행 선택 오류! 직접 결제 단계를 수행해주세요')
                         print(f"은행 선택 중 오류 발생: {e}")
 
                     # 현금영수증 미발행 라디오 버튼 찾기 및 클릭
@@ -345,11 +356,11 @@ while (not get_seat):
 
                     # 최종 결제
                     driver.find_elements(By.ID, 'btnFinalPayment').click()
-                    send_message(_TELEGRAM, '결제 단계 수행 완료! 확인 요망', 2)
+                    send_message(_T_BOT, _T_ID, '결제 단계 수행 완료! 확인 요망', 2)
                     time.sleep(1)
 
                 else:  # 무통이 없으면 카카오페이 머니로 변경
-                    send_message(_TELEGRAM, '카카오페이 머니로 결제 진행')
+                    send_message(_T_BOT, _T_ID, '카카오페이 머니로 결제 진행')
                     # 카카오페이 머니 클릭
                     kakaopay_money_button = WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.CSS_SELECTOR, 'input[title="카카오페이 머니"]'))
@@ -392,13 +403,13 @@ while (not get_seat):
                             payment_request_button.click()
                         else:
                             print("결제요청 버튼이 비활성화되어 있습니다. 결제 조건을 확인하세요.")
-                            send_message(_TELEGRAM, '카카오페이 결제 오류! 직접 결제 단계를 수행해주세요')
+                            send_message(_T_BOT, _T_ID, '카카오페이 결제 오류! 직접 결제 단계를 수행해주세요')
                     except Exception as e:
-                        send_message(_TELEGRAM, '카카오페이 결제 오류! 직접 결제 단계를 수행해주세요')
+                        send_message(_T_BOT, _T_ID, '카카오페이 결제 오류! 직접 결제 단계를 수행해주세요')
                         print(f"결제요청 버튼 클릭 중 오류 발생: {e}")
             except Exception as e:
-                send_message(_TELEGRAM, '결제 오류! 직접 결제 단계를 수행해주세요')
+                send_message(_T_BOT, _T_ID, '결제 오류! 직접 결제 단계를 수행해주세요')
                 print(f"결제 수단 선택 중 오류 발생: {e}")
     except Exception as e:
-        send_message(_TELEGRAM, '오류발생! 확인 요망')
+        send_message(_T_BOT, _T_ID, '오류발생! 확인 요망')
         print(f"오류 발생: {e}")

@@ -1,5 +1,6 @@
 from mmocr.apis import init_detector, inference_detector
 from mmocr.datasets import build_dataset
+from torch.utils.data import random_split
 from mmengine.runner import load_checkpoint, save_checkpoint
 from albumentations import Compose, ShiftScaleRotate
 import numpy as np
