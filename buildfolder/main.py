@@ -424,7 +424,7 @@ try:
         )
         payment_button.click()
 
-        time.sleep(7)
+        time.sleep(10)
 
         # 카카오 결제 돌입
         # iframe 'payInitIframe'에 한번 더 접근
