@@ -1,2 +1,2 @@
-call conda activate final_get_mt_seat
+call conda activate melon_reticket
 call python buildfolder\main.py

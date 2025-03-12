@@ -13,7 +13,7 @@ def getPreset():
 
         data = idpwFile.readlines()
         for i in data:
-            tempdata = i.split(':')
+            tempdata = i.split(']')
             value = tempdata[1].strip()
             if value == '':
                 preset_data[convert[tempdata[0]]] = ''
