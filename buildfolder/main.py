@@ -449,6 +449,7 @@ try:
             # 버튼 활성화 검사
             if not payment_request_button.get_attribute("disabled"):
                 payment_request_button.click()
+                send_message(_T_BOT, _T_ID, '카카오페이 결제 요청을 전송했습니다.', 4)
             else:
                 print("결제요청 버튼이 비활성화되어 있습니다. 결제 조건을 확인하세요.")
                 send_message(_T_BOT, _T_ID, '카카오페이 결제 오류! 직접 결제 단계를 수행해주세요')
