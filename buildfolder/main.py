@@ -16,7 +16,8 @@ chrome_options.add_argument("user-agent="+user_agent)
 chrome_options.add_experimental_option("detach", True)
 os = platform.system()
 if os == 'Windows':
-    chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
+    pass
+    # chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
 elif os == 'Darwin': # Mac
     pass
 elif os == 'Linux':
@@ -114,7 +115,7 @@ def find_seat():
         driver.find_element(by=By.ID, value='nextTicketSelection').click()
         print('*'*20)
         print('구역 내 좌석 수:', len(seats))
-        print('[좌석선택]', seat.get_attribute('x'), seat.get_attribute('y'))
+        # print('[좌석선택]', seat.get_attribute('x'), seat.get_attribute('y'))
         if checkAlert():
             didAlert = find_seat()
             if didAlert != 1:
@@ -229,7 +230,7 @@ def searchSeats():
             time.sleep(repeat_time) # 구역 전환 시간텀
         if didAlert == 1:
             get_seat = True
-            send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 5)
+            # send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 5)
             break
     if get_seat == False:
         driver.close()
@@ -356,7 +357,7 @@ try:
     )
 
     # 무통장입금 버튼이 활성화되어 있는지 확인
-    if not cash_payment_button.get_attribute("disabled"):
+    if cash_payment_button.get_attribute("disabled"):
         cash_payment_button.click()
         try:
             # select box에서 원하는 은행 찾기
@@ -417,38 +418,50 @@ try:
         )
         agree_all_checkbox.click()
 
-        time.sleep(2)
-        # iframe 'payInitIframe'에 한번 더 접근
-        WebDriverWait(driver, 10).until(
-            EC.frame_to_be_available_and_switch_to_it((By.ID, "payInitIframe"))
-        )
-
-        # 카카오 결제 돌입
-        time.sleep(2)
+        # 최종 결제
         payment_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, 'btnFinalPayment'))
         )
         payment_button.click()
 
+        time.sleep(7)
+
+        # 카카오 결제 돌입
+        # iframe 'payInitIframe'에 한번 더 접근
+        WebDriverWait(driver, 10).until(
+            EC.frame_to_be_available_and_switch_to_it((By.ID, "payInitIframe"))
+        )
+
+        time.sleep(2)
         # "카톡결제" 요소 찾기 및 클릭
         wait_element(10, (By.ID, '카톡결제'), True)
 
-        # 휴대폰번호 입력
-        phone_number_input = wait_element(10, (By.NAME, 'phoneNumber'))
-        phone_number_input.send_keys(presetData['phonenumber'])
+        # phone_number_input = WebDriverWait(driver, 10).until(
+        #     EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[name="phoneNumber"]'))
+        # )
+        # phone_number_input.send_keys(presetData['phonenumber'])
+        #
+        # # 생년월일 입력
+        # date_of_birth_input = WebDriverWait(driver, 10).until(
+        #     EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[name="dateOfBirth"]'))
+        # )
+        # date_of_birth_input.send_keys(presetData['birthdata'])
 
-        # 생년월일 입력
-        date_of_birth_input = driver.find_elements(By.NAME, 'dateOfBirth')
+        phone_number_input = driver.find_element(By.CSS_SELECTOR, 'input[name="phoneNumber"]')
+        phone_number_input.send_keys(presetData['phonenumber'])
+        time.sleep(1)
+        date_of_birth_input = driver.find_element(By.CSS_SELECTOR, 'input[name="dateOfBirth"]')
         date_of_birth_input.send_keys(presetData['birthdate'])
-        
+
         # 결제요청하기
         time.sleep(1)
 
         try:
-            payment_request_button = driver.find_elements(By.CSS_SELECTOR, 'button[type="button"].kp-m-button.large.primary')
+            payment_request_buttons = driver.find_elements(By.CSS_SELECTOR,
+                                                           'button[type="button"].kp-m-button.large.primary')
             # 버튼 활성화 검사
-            if not payment_request_button.get_attribute("disabled"):
-                payment_request_button.click()
+            if payment_request_buttons and payment_request_buttons[0].is_enabled():  # 버튼리스트가 비어있지않고, 첫번째 요소가 활성화 되어있는지 확인
+                payment_request_buttons[0].click()
                 send_message(_T_BOT, _T_ID, '카카오페이 결제 요청을 전송했습니다.', 4)
             else:
                 print("결제요청 버튼이 비활성화되어 있습니다. 결제 조건을 확인하세요.")
