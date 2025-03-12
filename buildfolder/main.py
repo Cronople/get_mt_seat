@@ -356,7 +356,7 @@ try:
     )
 
     # 무통장입금 버튼이 활성화되어 있는지 확인
-    if cash_payment_button.get_attribute("disabled"):
+    if not cash_payment_button.get_attribute("disabled"):
         cash_payment_button.click()
         try:
             # select box에서 원하는 은행 찾기
