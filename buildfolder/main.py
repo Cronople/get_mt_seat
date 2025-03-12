@@ -16,8 +16,7 @@ chrome_options.add_argument("user-agent="+user_agent)
 chrome_options.add_experimental_option("detach", True)
 os = platform.system()
 if os == 'Windows':
-    pass
-    # chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
+    chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
 elif os == 'Darwin': # Mac
     pass
 elif os == 'Linux':
@@ -230,7 +229,7 @@ def searchSeats():
             time.sleep(repeat_time) # 구역 전환 시간텀
         if didAlert == 1:
             get_seat = True
-            # send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 5)
+            send_message(_T_BOT, _T_ID, 'WE Got Ticket!', 5)
             break
     if get_seat == False:
         driver.close()
@@ -435,17 +434,6 @@ try:
         time.sleep(2)
         # "카톡결제" 요소 찾기 및 클릭
         wait_element(10, (By.ID, '카톡결제'), True)
-
-        # phone_number_input = WebDriverWait(driver, 10).until(
-        #     EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[name="phoneNumber"]'))
-        # )
-        # phone_number_input.send_keys(presetData['phonenumber'])
-        #
-        # # 생년월일 입력
-        # date_of_birth_input = WebDriverWait(driver, 10).until(
-        #     EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[name="dateOfBirth"]'))
-        # )
-        # date_of_birth_input.send_keys(presetData['birthdata'])
 
         phone_number_input = driver.find_element(By.CSS_SELECTOR, 'input[name="phoneNumber"]')
         phone_number_input.send_keys(presetData['phonenumber'])
