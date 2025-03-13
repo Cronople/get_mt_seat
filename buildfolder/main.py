@@ -396,12 +396,12 @@ try:
         )
         agree_all_checkbox.click()
 
+        time.sleep(1)
         # 최종 결제
         payment_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, 'btnFinalPayment'))
             )
         payment_button.click()
-        send_message(_T_BOT, _T_ID, '결제 단계 수행 완료! 확인 요망', 2)
 
     else:  # 무통이 없으면 카카오페이 머니로 변경
         send_message(_T_BOT, _T_ID, '카카오페이 머니로 결제 진행')
@@ -450,6 +450,8 @@ try:
             # 버튼 활성화 검사
             if payment_request_buttons and payment_request_buttons[0].is_enabled():  # 버튼리스트가 비어있지않고, 첫번째 요소가 활성화 되어있는지 확인
                 payment_request_buttons[0].click()
+                time.sleep(1)
+                driver.switch_to.default_content()  # iframe에서 빠져나오기
                 send_message(_T_BOT, _T_ID, '카카오페이 결제 요청을 전송했습니다.', 4)
             else:
                 print("결제요청 버튼이 비활성화되어 있습니다. 결제 조건을 확인하세요.")
@@ -460,3 +462,16 @@ try:
 except Exception as e:
     send_message(_T_BOT, _T_ID, '결제 오류! 직접 결제 단계를 수행해주세요')
     print(f"결제 수단 선택 중 오류 발생: {e}")
+
+try:
+    driver.switch_to.default_content()  # iframe에서 빠져나오기
+except:
+    print('iframe 벗어나기 오류 발생')
+try:
+    # "결제가 정상적으로 완료되었습니다." 요소 찾기
+    element = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "tit_gr"))
+    )
+    send_message(_T_BOT, _T_ID, '결제 단계 수행 완료! 확인 요망')
+except Exception as e:
+    send_message(_T_BOT, _T_ID, '결제 오류! 직접 결제 단계를 수행해주세요', 3)
