@@ -299,8 +299,8 @@ while (not get_seat):
             time.sleep(2)
     print('시작 시간:', time.ctime())
 
-    if checkAvailable():
-        pass # 오류 발생시 하단 진행 사항 넘기기
+    if not checkAvailable():
+        continue # 오류 발생시 하단 진행 사항 넘기기
 
     if checkCaptcha():  # 보안코드 있는지 체크
         captcha_text = driver.find_element(By.ID, 'label-for-captcha')
