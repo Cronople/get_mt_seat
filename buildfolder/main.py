@@ -90,7 +90,7 @@ def login(_platform, _id, _pw):
         print(f"로그인 오류 발생: {e}")
 
 
-def find_seat():
+def find_seat(ticketBtn):
     didAlert = 0
     # JavaScript 코드 실행
     seats = driver.execute_script("""
@@ -111,20 +111,17 @@ def find_seat():
     for seat in seats:
         # 예시: 특정 fill 값을 가진 요소 클릭
         seat.click()
-        driver.find_element(by=By.ID, value='nextTicketSelection').click()
+        ticketBtn.click()
         print('*'*20)
         print('구역 내 좌석 수:', len(seats))
         # print('[좌석선택]', seat.get_attribute('x'), seat.get_attribute('y'))
         if checkAlert():
-            didAlert = find_seat()
+            didAlert = find_seat(ticketBtn)
             if didAlert != 1:
                 didAlert = 2  # 좌석 찾음, 이선좌로 알람발생
             break
         else:
             return 1  # 좌석 찾음, 알람 없음
-    if len(seats) == 0:
-        pass
-        # print('구역 내 좌석 없음.')
     return didAlert  # 0의 경우 좌석 없음
 
 
@@ -154,14 +151,7 @@ def checkCaptcha():  # display: none or block에 따라 확인
         return False  # 보안창이 없으므로 패스
     
 
-def searchSeats():
-    get_seat = False
-    # iframe으로 전환 (반드시 필요)
-    WebDriverWait(driver, 10).until(
-        EC.frame_to_be_available_and_switch_to_it((By.ID, "oneStopFrame"))
-    )
-    # print('iframe 전환 완료')
-
+def getSector():
     # 좌석 등급 펼치기
     tbody = wait_element(10, (By.ID, "divGradeSummary"))
     # tbody 안의 모든 tr 요소 찾기 (좌석 정보 tr만 해당)
@@ -181,7 +171,19 @@ def searchSeats():
         else:
             grade = presetData['grade']
         sector_element = sector_elements[int(int(grade) * 2)]
-    print(sector_element.text, ' 구역 요소 확장')
+    print(sector_element.text, ' 구역 요소 확장') 
+    return sector_element
+
+
+def searchSeats():
+    get_seat = False
+    # iframe으로 전환 (반드시 필요)
+    WebDriverWait(driver, 10).until(
+        EC.frame_to_be_available_and_switch_to_it((By.ID, "oneStopFrame"))
+    )
+    # print('iframe 전환 완료')
+
+    sector_element = getSector()
     sector_element.click()
     time.sleep(.2)
 
@@ -211,16 +213,24 @@ def searchSeats():
     else:
         repeat_time= float(presetData['repeat'])
 
+    ticketBtn = driver.find_element(by=By.ID, value='nextTicketSelection')
+
     start_time = time.time()
     while time.time() - start_time < 2400: # 40분에 한번씩 초기화
         for i in focus_sector_list:
-            seat_elements[i].click()
+            try:
+                seat_elements[i].click()
+            except:
+                sector_element.click()
+                time.sleep(.2)
+                seat_elements[i].click()
 
-            didAlert = find_seat()
+            didAlert = find_seat(ticketBtn)
 
             if didAlert == 1:  # 좌석 잡음
                 break
             elif didAlert == 2:  # 이선좌로 알람 발생
+                sector_element = getSector()
                 sector_element.click()
                 time.sleep(0.2)
                 seat_elements = WebDriverWait(driver, 10).until(
