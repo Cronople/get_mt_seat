@@ -6,7 +6,9 @@ def getPreset():
                '전화번호(-없이)': 'phonenumber', 
                '생년월일(6자리)': 'birthdate',
                '반복 간격': 'repeat',
-               '예매 사이트': 'page'}
+               '예매 사이트': 'page',
+               '지정프로필': 'profile'
+               }
 
     with open('preset.txt', 'r', encoding='utf-8') as idpwFile:
         preset_data = {}

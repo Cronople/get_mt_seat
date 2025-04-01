@@ -10,13 +10,19 @@ from selenium.webdriver.support import expected_conditions as EC
 from recognize_word import recognizing
 from preset import getPreset
 
+#프리셋 데이터 로드
+presetData = getPreset()
+
 chrome_options = Options()
 user_agent=f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 chrome_options.add_argument("user-agent="+user_agent)
 chrome_options.add_experimental_option("detach", True)
 os = platform.system()
 if os == 'Windows':
-    chrome_options.add_argument('user-data-dir=C:\\user_data\\user')
+    if presetData["profile"] == '':
+        chrome_options.add_argument(f'user-data-dir=C:\\user_data\\user')
+    else:
+        chrome_options.add_argument(f'user-data-dir=C:\\user_data\\{presetData["profile"]}')
 elif os == 'Darwin': # Mac
     pass
 elif os == 'Linux':
@@ -250,8 +256,6 @@ def searchSeats():
 
 
 #############################
-#프리셋 데이터 로드
-presetData = getPreset()
 
 with open('idpw.txt', 'r', encoding='utf-8') as idpwFile:
     _ID = idpwFile.readline().strip()
@@ -267,6 +271,12 @@ if presetData['page'] == '':
 else:
     driver.get(presetData['page'])
 # driver.get("https://ticket.melon.com/performance/index.htm?prodId=210711")
+
+#check Notice Popup
+try:
+    wait_element(3, (By.CLASS_NAME, 'bottomPopClose'), True)
+except:
+    pass
 
 login(_PLATFORM, _ID, _PW)
 
