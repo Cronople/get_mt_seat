@@ -20,7 +20,7 @@ chrome_options.add_experimental_option("detach", True)
 os = platform.system()
 if os == 'Windows':
     if presetData["profile"] == '':
-        chrome_options.add_argument(f'user-data-dir=C:\\user_data\\user')
+        pass
     else:
         chrome_options.add_argument(f'user-data-dir=C:\\user_data\\{presetData["profile"]}')
 elif os == 'Darwin': # Mac
@@ -236,6 +236,7 @@ def searchSeats():
             if didAlert == 1:  # 좌석 잡음
                 break
             elif didAlert == 2:  # 이선좌로 알람 발생
+                print(f'이선좌 구역: {seat_elements[i].text}')
                 sector_element = getSector()
                 sector_element.click()
                 time.sleep(0.2)
@@ -274,7 +275,7 @@ else:
 
 #check Notice Popup
 try:
-    wait_element(3, (By.CLASS_NAME, 'bottomPopClose'), True)
+    wait_element(3, (By.ID, 'noticeAlert_layerpopup_cookie'), True)
 except:
     pass
 
