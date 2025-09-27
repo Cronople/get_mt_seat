@@ -1,31 +1,29 @@
-def getPreset():
-    convert = {'날짜선택': 'date',
-               '좌석등급': 'grade', 
-               '구역선택': 'sector', 
-               '은행명': 'bank', 
-               '전화번호(-없이)': 'phonenumber', 
-               '생년월일(6자리)': 'birthdate',
-               '반복 간격': 'repeat',
-               '예매 사이트': 'page',
-               '지정프로필': 'profile'
-               }
+def getPreset(profile):
 
-    with open('preset.txt', 'r', encoding='utf-8') as idpwFile:
-        preset_data = {}
-
-        data = idpwFile.readlines()
-        for i in data:
-            tempdata = i.split(']')
-            value = tempdata[1].strip()
-            if value == '':
-                preset_data[convert[tempdata[0]]] = ''
-            else:
-                preset_data[convert[tempdata[0]]] = value
-        idpwFile.close()
+    config = {}
+    with open(f'./data/{profile}_data.txt', 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and ':' in line:
+                key, value = line.split(':', 1)
+                key = key.strip()
+                value = value.strip()
+                config[key] = value
+    print('Preset data loading complete')
     
+    items = []
+    with open(f'./data/{profile}_sector.txt', "r", encoding="utf-8") as f:
+        for line in f:
+            grade, area, direction, text = line.strip().split("|")
+            items.append({
+                "gradeData": grade, # 등급(VIP, 일반석 등)
+                "sectorType": area, # 구역명으로 할지, 순서로 유형 선택
+                "directionData": direction, # 구역 우선 조사 방향
+                "textData": text # 구역명
+            })
+        config['sectorList'] = items
+    print('Sector data loading complete')
     
-    print('-' * 20)
-    print(preset_data)
-    print('-' * 20)
+    print(f"보안문자처리 방식:{config['device']}\n사용 아이디:{config['id']}\n")
 
-    return preset_data
+    return config

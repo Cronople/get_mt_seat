@@ -1,1 +1,0 @@
-python buildfolder\main.py

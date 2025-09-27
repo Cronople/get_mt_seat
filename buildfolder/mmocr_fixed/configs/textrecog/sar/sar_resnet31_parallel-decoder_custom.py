@@ -1,7 +1,7 @@
 _base_ = [
     # '../_base_/datasets/toy_data.py',
-    '../_base_/default_runtime.py',
-    '../_base_/schedules/schedule_adam_step_5e.py',
+    # '../_base_/default_runtime.py',
+    # '../_base_/schedules/schedule_adam_step_5e.py',
     '_base_sar_resnet31_parallel-decoder.py',
 ]
 
@@ -11,7 +11,7 @@ optim_wrapper = dict(
     optimizer=dict(type='Adam', lr=5e-4, weight_decay=1e-4)
 )
 
-load_from='./save/rec_word03/epoch_90.pth'
+# load_from='./save/rec_word03/epoch_90.pth'
 visualizer=dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')])
 
 param_scheduler = [

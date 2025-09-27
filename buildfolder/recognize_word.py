@@ -4,12 +4,11 @@ import urllib.request
 from mmocr_fixed.inference_word import inferencing
 
 
-def recognizing(link):
+def recognizing(link, recog_model):
     img = url_to_image(link)
-    text = inferencing(img)
+    text = inferencing(img, recog_model)
     
     return text
-
 
 def url_to_image(url):
     background_color = (255,255,255)
