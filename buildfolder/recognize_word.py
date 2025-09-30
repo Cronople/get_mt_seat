@@ -4,9 +4,9 @@ import urllib.request
 from mmocr_fixed.inference_word import inferencing
 
 
-def recognizing(link, recog_model):
+def recognizing(link, recog_model, logLevel):
     img = url_to_image(link)
-    text = inferencing(img, recog_model)
+    text = inferencing(img, recog_model, logLevel)
     
     return text
 

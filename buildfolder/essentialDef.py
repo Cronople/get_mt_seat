@@ -5,6 +5,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
+def printL(arg, text, log_level=1):
+    if arg <= log_level:
+        print(text)
+    
+
 def wait_element(driver, t, element, clickable=False):
     target = WebDriverWait(driver, t).until(EC.visibility_of_element_located(element))
     if clickable:
@@ -34,9 +39,9 @@ def checkAlert(driver, delay_t=.4):
         alert.accept()
         time.sleep(delay_t)
         if ("확인해주세요" in alertText):
-            # 단일 등급이 아닌 곳에서 뜨는 알림 선택하신 좌석등급과 가격이 맞는지 확인해주세요.
+            # 단일 등급이 아닌 곳에서 뜨는 알림. 선택하신 좌석등급과 가격이 맞는지 확인해주세요.
             return False
         else:
             return True
-    except Exception as e:
+    except:
         return False

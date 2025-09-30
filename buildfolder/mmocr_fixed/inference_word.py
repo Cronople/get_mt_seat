@@ -1,7 +1,7 @@
-from mmocr.apis import MMOCRInferencer
 from mmocr.apis import TextRecInferencer
 import cv2 as cv
 import time
+from mmengine.logging import MMLogger
 
 
 def local_img2square(path):
@@ -18,11 +18,10 @@ def local_img2square(path):
     return square_img
 
 
-def preload_inferencer(device_name):
-    # model_path = 'buildfolder/mmocr_fixed/configs/textrecog/crnn/crnn_mini-vgg_5e_mj.py'
+def preload_inferencer(device_name, logLevel):
     model_path = 'buildfolder/mmocr_fixed/configs/textrecog/sar/sar_resnet31_parallel-decoder_custom.py'
-    # weights_path = 'buildfolder/mmocr_fixed/save/rec_word03/crnn_mini-vgg_5e_mj_20220826_224120-8afbedbb.pth'
     weights_path = 'buildfolder/mmocr_fixed/save/rec_word03/epoch_100.pth'
+        
     inferencer = TextRecInferencer(model=model_path, weights=weights_path, device=device_name)
 
     if device_name != 'cpu':
@@ -31,12 +30,12 @@ def preload_inferencer(device_name):
     return inferencer
 
 
-def inferencing(img, inferencer):
+def inferencing(img, inferencer, logLevel):
     start_time = time.time()
     word = inferencer(img)
     
-    # print('*'*20)
     # print(word['predictions'][0]['rec_texts'][0])
-    print('보안문자 추론 소요 시간 ', time.time() - start_time)
+    if logLevel <= 3:
+        print('보안문자 추론 소요 시간 ', time.time() - start_time)
 
     return word['predictions'][0]['text']

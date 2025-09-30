@@ -19,31 +19,30 @@ def ticketSelect(driver, presetData):
     try:
         # CSS 선택자 '[id^="..."]'를 사용하여 특정 문자열로 시작하는 ID를 가진 요소를 찾습니다.
         ticket_select_elements = driver.find_elements(By.CSS_SELECTOR, "[id^='volume_']")
-    except:
-        pass
-    # ticket_select_elements = driver.find_elements(By.ID, 'volume_10009_10067') # 아이브 id
-    # ticket_select_elements = driver.find_elements(By.ID, 'volume_10007_10067')  # 다른 예매 id
 
-    if ticket_select_elements:  # 선택창 확인
-        select_element = ticket_select_elements[0]
-        select = Select(select_element)
-        select.select_by_index(1)
-        # 아직 1장만 고르도록 되어있음.
+        if ticket_select_elements:  # 선택창 확인
+            select_element = ticket_select_elements[0]
+            select = Select(select_element)
+            select.select_by_index(1)
+            # 아직 1장만 고르도록 되어있음.
+        wait_element(driver, 5, (By.ID, 'nextPayment'), True)
+    except:
+        send_message(presetData, '결제 단계 오류 발생! 좌석 매수 선택 오류!')
+        ticketSelect(driver, presetData)
 
     # 가격 선택 창에서 다음 버튼
-    wait_element(driver, 5, (By.ID, 'nextPayment'), True)
     checkAlert(driver, 3)
     time.sleep(3)
 
 
 def virtualAccountOption(driver, presetData):
+    isClickable = None
     # 무통장입금 버튼 찾기
     cash_payment_button = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "label[for='payMethodCode003']"))
     )
-    # 무통장입금 버튼이 활성화되어 있는지 확인
-    isClickable = None
     try:
+        # 무통장입금 버튼이 활성화되어 있는지 확인
         isClickable_element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "payMethodCode003"))
         )
@@ -60,23 +59,12 @@ def virtualAccountOption(driver, presetData):
             select = Select(bank_select)
 
             # 은행명과 일치하는 option 찾아서 선택
-            bank_found = False  # 은행을 찾았는지 여부를 저장하는 변수
-            if presetData['bank'] == '':
-                presetData['bank'] = '우리은행'
             for option in select.options:
                 if option.text == presetData['bank']:
                     select.select_by_visible_text(presetData['bank'])
-                    bank_found = True  # 은행을 찾았음을 표시
                     break  # 은행을 찾았으면 반복문 종료
-
-            if not bank_found:  # 은행을 찾지 못했다면
-                send_message(presetData,'은행 선택 오류! 직접 결제 단계를 수행해주세요')
-                print(f"은행: {presetData['bank']} 를 찾을 수 없습니다.")
-                # 은행 못 찾으면 그냥 첫번째 은행으로 고르도록
-
-        except Exception as e:
-            send_message(presetData, '은행 선택 오류! 직접 결제 단계를 수행해주세요')
-            print(f"은행 선택 중 오류 발생: {e}")
+        except:
+            print('일치하는 은행명 찾을 수 없음. 첫번째 은행으로 진행.')
 
         # 현금영수증 미발행 라디오 버튼 찾기 및 클릭
         no_issue_radio = WebDriverWait(driver, 10).until(

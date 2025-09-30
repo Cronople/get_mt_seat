@@ -24,6 +24,6 @@ def getPreset(profile):
         config['sectorList'] = items
     print('Sector data loading complete')
     
-    print(f"보안문자처리 방식:{config['device']}\n사용 아이디:{config['id']}\n")
+    print(f"프로필: {config['profile']}\n보안문자처리 방식: {config['device']}\n사용 아이디: {config['id']}\n선택 날짜: {config['date']}")
 
     return config

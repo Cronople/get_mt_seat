@@ -2,7 +2,7 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from essentialDef import send_message, wait_element, checkAlert
+from essentialDef import send_message, wait_element, checkAlert, printL
 
 
 def checkAvailable(driver):
@@ -72,8 +72,11 @@ def settingJS(driver, seatDirection):
 
 def find_seat(driver, ticketBtn, seatDirection, asSeatLim, pre_seat = []):
     didAlert = 0
-
-    seats = settingJS(driver, seatDirection)
+    try:
+        seats = settingJS(driver, seatDirection)
+    except:
+        time.sleep(.1)
+        seats = settingJS(driver, seatDirection)
 
     # 찾은 요소들을 활용하여 Selenium 작업 수행 (예: 클릭, 텍스트 가져오기 등)
     for seat in seats:
@@ -89,13 +92,14 @@ def find_seat(driver, ticketBtn, seatDirection, asSeatLim, pre_seat = []):
         pre_seat.append(seat.rect)
         # print('좌석선택: ', seat.rect)
         
+        print('*'*30)
         seat.click()
         time.sleep(.5)
+        print('-'*30)
         ticketBtn.click()
 
-        print('*'*20)
         print('구역 내 좌석 수:', len(seats))
-        if checkAlert(driver):
+        if checkAlert(driver, .1):
             didAlert = find_seat(driver, ticketBtn, seatDirection, asSeatLim, pre_seat)
             if didAlert != 1:
                 didAlert = 2  # 좌석 찾음, 이선좌로 알람발생
@@ -106,6 +110,7 @@ def find_seat(driver, ticketBtn, seatDirection, asSeatLim, pre_seat = []):
 
 
 def getSector(driver, presetData, isMultigrade):
+    _log = presetData['logLevel']
     deleteSectorList = []
     seletedSectorList = []
     # print('check21')
@@ -126,15 +131,15 @@ def getSector(driver, presetData, isMultigrade):
                 for e in seat_elements:
                     if sectorData['textData'].strip() in e.text:
                         focus_sector = e
-                        print(sectorData['gradeData'], e.text)
+                        printL(_log, f"{sectorData['gradeData']}, {e.text}", 2)
                         break
                 if focus_sector == None:
-                    print('No sector: ', sectorData['textData'])
+                    printL(_log, f"No sector: ', {sectorData['textData']}", 4)
                     deleteSectorList.append(sectorData)
                 else:
                     seletedSectorList.append(focus_sector)
             except Exception as e:
-                print('구역 세팅 오류 발생', e)
+                printL(_log, f'구역 세팅 오류 발생, {e}', 4)
         else:
             if isMultigrade:
                 seat_elements = list_area[int(sectorData['gradeData'])].find_elements(By.TAG_NAME, "li")
@@ -142,10 +147,10 @@ def getSector(driver, presetData, isMultigrade):
                 seat_elements = list_area[0].find_elements(By.TAG_NAME, "li")
             focus_sector = seat_elements[int(sectorData['textData'])]
             if focus_sector == None:
-                print('No sector: ', sectorData['textData'])
+                printL(_log, f"No sector: ', {sectorData['textData']}", 4)
                 deleteSectorList.append(sectorData)
             else:
-                print(sectorData['gradeData'], focus_sector.text)
+                printL(_log, f"{sectorData['gradeData']}, {e.text}", 2)
                 seletedSectorList.append(focus_sector)
 
     for deleteSector in deleteSectorList:
@@ -168,6 +173,7 @@ def getGrade(driver, sectorData):
 
 
 def openGrade(driver, presetData):
+    _log = presetData['logLevel']
     # print('check10')
     tbody = wait_element(driver, 10, (By.ID, "divGradeSummary"))
     present_grade = presetData['sectorList'][0]['gradeData']
@@ -180,6 +186,7 @@ def openGrade(driver, presetData):
     sector_elements = tbody.find_elements(By.TAG_NAME, "tr")
     if multi_grade:
         # 다중 등급이라 모든 등급 열기
+        printL(_log, '다중 등급', 2)
         for sector_element in sector_elements:
             try:
                 sector_element.find_element(By.CSS_SELECTOR, ".open")
@@ -187,7 +194,7 @@ def openGrade(driver, presetData):
                 sector_element.click()
     else:
         # 단일 등급 설정일 경우
-        print('단일 등급')
+        printL(_log, '단일 등급', 2)
         sector_element = sector_elements[int(int(present_grade) * 2)]
         try:
             sector_element.find_element(By.CSS_SELECTOR, ".open")
@@ -198,12 +205,13 @@ def openGrade(driver, presetData):
     return multi_grade
 
 
-def searchSetting(driver, presetData):
+def settingSearch(driver, presetData):
+    _log = presetData['logLevel']
     # iframe으로 전환 (반드시 필요)
     WebDriverWait(driver, 10).until(
         EC.frame_to_be_available_and_switch_to_it((By.ID, "oneStopFrame"))
     )
-    # print('iframe 전환 완료')
+    printL(_log, 'iframe 전환 완료', 1)
 
     # 좌석 등급 설정
     isMultigrade = openGrade(driver, presetData)
@@ -215,6 +223,7 @@ def searchSetting(driver, presetData):
 
 
 def searchSeats(driver, presetData, seletedSectorList):
+    _log = presetData['logLevel']
     get_seat = False
     start_time = time.time()
 
@@ -223,9 +232,9 @@ def searchSeats(driver, presetData, seletedSectorList):
     else:
         repeat_time= float(presetData['repeat'])
 
-    ticketBtn = driver.find_element(by=By.ID, value='nextTicketSelection')
 
     while time.time() - start_time < 600: # 10분에 한번씩 초기화
+        ticketBtn = driver.find_element(by=By.ID, value='nextTicketSelection')
         for i, focus_sector in enumerate(seletedSectorList):
             sectorName = focus_sector.text
             # print('check50')
@@ -237,9 +246,9 @@ def searchSeats(driver, presetData, seletedSectorList):
                 break
             elif didAlert == 2:  # 이선좌로 알람 발생
                 # print('check0')
-                print(f'{time.ctime()}\n 이선좌 구역: {sectorName}')
+                printL(_log, f'{time.ctime()}\n 이선좌 구역: {sectorName}', 4)
                 # print('check1')
-                ticketBtn = driver.find_element(by=By.ID, value='nextTicketSelection')
+                # ticketBtn = driver.find_element(by=By.ID, value='nextTicketSelection')
                 # print('check2')
                 isMultigrade = openGrade(driver, presetData)
                 # print('check3')
@@ -273,6 +282,8 @@ def checkCaptcha(driver):  # display: none or block에 따라 확인
     
 
 def solvingCaptcha(driver, presetData, recog_model):
+    _log = presetData['logLevel']
+
     if presetData['device'] != 'hand':
         from recognize_word import recognizing
 
@@ -281,7 +292,7 @@ def solvingCaptcha(driver, presetData, recog_model):
         while checkCaptcha(driver):
             time.sleep(.1)
             if wait_stack > 30:
-                print('캡챠 직접 인증 기다리는 중...you are using hand option')
+                printL(_log, '캡챠 직접 인증 기다리는 중...you are using hand option', 4)
                 wait_stack = 0
             wait_stack += 1
     else:
@@ -289,7 +300,7 @@ def solvingCaptcha(driver, presetData, recog_model):
         captcha_reload = driver.find_element(By.ID, 'btnReload')
         captcha_count = 0
         while checkCaptcha(driver):
-            if captcha_count > 10:
+            if captcha_count > 10 and presetData['headlessCheck'] == "0":
                 send_message(presetData, '캡챠 10회 이상 오류, 직접 진행해주세요')
                 while checkCaptcha(driver):
                     time.sleep(1)
@@ -301,9 +312,9 @@ def solvingCaptcha(driver, presetData, recog_model):
                 captcha_text.clear()
                 # ID - label-for-captcha : 캡챠 적는 란
                 captchaImg = driver.find_element(By.ID, 'captchaImg')
-                captcha_word = recognizing(captchaImg.get_attribute('src'), recog_model)
+                captcha_word = recognizing(captchaImg.get_dom_attribute('src'), recog_model, presetData['logLevel'])
                 captcha_text.send_keys(captcha_word)
-                # print(captcha_word)
+                printL(_log, captcha_word, 1)
                 driver.find_element(By.XPATH, '//*[@id="btnComplete"]').click()
             except:
                 pass

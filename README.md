@@ -1,29 +1,28 @@
 # get\_mt\_seat
 
-###  Version Dependency
+##  Version Dependency
 
 python version == 3.8
 
-##### selenium
+### selenium
 
 selenium ==  4.27.0
 
-##### opencv
+### opencv
 
 opencv-python == 4.11.0.86
 
-##### mmocr
+### mmocr
 
-openmim == 0.3.9
-mmengine == 0.10.7
-mmcv == 2.0.0rc4
-mmdet == 3.1.0
-mmocr == 1.0.1
+1. openmim == 0.3.9
+2. mmengine == 0.10.7
+3. mmcv == 2.0.0rc4
+4. mmdet == 3.1.0
+5. mmocr == 1.0.1
 
-##### pytorch
+#### pytorch
 
-basically use pytorch 1.8.0
-pip install torch torchvision torchaudio
+basically use pytorch 1.8.0 
 https://pytorch.org/get-started/locally/
 
 
@@ -35,3 +34,4 @@ https://pytorch.org/get-started/locally/
 3. 결제 단계 직접 수행, 무통장, 카카오페이 고를 수 있도록
 4. sectorUI 에서 I1, I 1 같이 헷갈릴 때 그냥 콤마를 넣고 한방에 추가하면 알아서 하도록 해야겠음.
 5. 새치기 코드 추가 필요
+6. log-level 추가 필요
